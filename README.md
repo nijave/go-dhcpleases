@@ -12,3 +12,8 @@ See https://github.com/opnsense/ports/blob/master/opnsense/dhcpleases/files/dhcp
  - Shutdown signal handling
  - Tests
  - Handle filenames as flags (like dhcpleases.c)
+
+## Building
+Code is specific to FreeBSD (kevent)
+
+`GOOS=freebsd go build`
