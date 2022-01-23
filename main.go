@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	leases "github.com/npotts/go-dhcpd-leases"
+	leases "github.com/nijave/go-dhcpd-leases"
 	"log"
 	"os"
 	"regexp"
