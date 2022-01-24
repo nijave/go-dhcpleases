@@ -32,7 +32,7 @@ func (p DynamicPid) SetPid(pid int) {
 func (p DynamicPid) Watch() {
 	data := make([]byte, 8)
 	pidFileWatch := KeventWatch{Filename: p.PidFile}
-	events := pidFileWatch.Watch()
+	events := pidFileWatch.Watch(false)
 
 	for {
 		log.Printf("[pid] reading %s\n", p.PidFile)

@@ -14,8 +14,9 @@ import (
 
 var log *_log.Logger
 
-func GenerateHostsFile(fileName string) {
+func GenerateHostsFile(fileName string) string {
 	validHostname := regexp.MustCompile(`^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$`)
+	var hostsFile strings.Builder
 
 	f, err := os.Open(fileName)
 	if err != nil {
@@ -84,12 +85,15 @@ func GenerateHostsFile(fileName string) {
 	})
 
 	for _, lease := range leases {
-		fmt.Printf("%-16s %s\n", lease.IP.String(), lease.ClientHostname)
+		hostsFile.WriteString(fmt.Sprintf("%-16s %s\n", lease.IP.String(), lease.ClientHostname))
 	}
+
+	return hostsFile.String()
 }
 
 func main() {
 	log = _log.New(os.Stderr, "", 0)
+	log.SetFlags(_log.Ldate | _log.Ltime | _log.Lshortfile)
 
 	var fileName string
 	if len(os.Args) == 2 {
@@ -107,8 +111,9 @@ func main() {
 	go dnsmasq.Watch()
 
 	dhcpWatch := KeventWatch{Filename: fileName}
-	for _ = range dhcpWatch.Watch() {
-		GenerateHostsFile(fileName)
+	for _ = range dhcpWatch.Watch(false) {
+		hostsFile := GenerateHostsFile(fileName)
+		os.Stdout.WriteString(hostsFile)
 		dnsmasq.Notify(syscall.SIGHUP)
 	}
 }
