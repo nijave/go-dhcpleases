@@ -10,6 +10,7 @@ import (
 	"strings"
 	"sync"
 	"syscall"
+	"time"
 )
 
 var log *_log.Logger
@@ -93,7 +94,7 @@ func GenerateHostsFile(fileName string) string {
 
 func main() {
 	log = _log.New(os.Stderr, "", 0)
-	log.SetFlags(_log.Ldate | _log.Ltime | _log.Lshortfile)
+	log.SetFlags(_log.Ldate | _log.Ltime | _log.Lmicroseconds | _log.Lshortfile)
 
 	var fileName string
 	if len(os.Args) == 2 {
@@ -111,9 +112,24 @@ func main() {
 	go dnsmasq.Watch()
 
 	dhcpWatch := KeventWatch{Filename: fileName}
-	for _ = range dhcpWatch.Watch(false) {
+	events := dhcpWatch.Watch(true)
+	for {
+		start := time.Now()
+		log.Println("[hosts] generating new file")
 		hostsFile := GenerateHostsFile(fileName)
-		os.Stdout.WriteString(hostsFile)
+		fd, err := os.OpenFile("/var/etc/dnsmasq-hosts-dhcp", os.O_RDWR|os.O_TRUNC|os.O_CREATE, 0644)
+		if err != nil {
+			log.Printf("[hosts] error writing file %v\n", err)
+		}
+		n, err := fd.WriteString(hostsFile)
+		if err != nil {
+			log.Printf("[hosts] writing file %v\n", err)
+		}
+		log.Printf("[hosts] wrote %d bytes\n", n)
+		fd.Close()
 		dnsmasq.Notify(syscall.SIGHUP)
+		log.Printf("[hosts] completed in %dms\n", time.Since(start).Milliseconds())
+
+		<-events
 	}
 }

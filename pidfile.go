@@ -44,6 +44,7 @@ func (p DynamicPid) Watch() {
 		}
 
 		n, err := fd.Read(data)
+		fd.Close()
 		if err != nil {
 			log.Printf("[pid] error %v reading pid file %s\n", err, p.PidFile)
 			time.Sleep(1 * time.Second)

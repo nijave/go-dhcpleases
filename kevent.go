@@ -19,7 +19,7 @@ type KeventWatch struct {
 func (k KeventWatch) Watch(block bool) <-chan int {
 	var buf int
 	if block {
-		buf = 0
+		buf = 16
 	} else {
 		buf = 1
 	}
@@ -57,7 +57,7 @@ func (k KeventWatch) Watch(block bool) <-chan int {
 				continue
 			}
 
-			log.Println("[kevent] opening fd")
+			log.Printf("[kevent] opening fd %s\n", k.Filename)
 			fd, err := syscall.Open(k.Filename, syscall.O_RDONLY, 0)
 			if err != nil {
 				failures += 1
@@ -65,24 +65,25 @@ func (k KeventWatch) Watch(block bool) <-chan int {
 				time.Sleep(100 * time.Millisecond)
 				continue
 			}
+			log.Printf("[kevent] fd=%d opened for %s\n", fd, k.Filename)
 
-			log.Println("[kevent] setting up event watch")
+			log.Printf("[kevent] fd=%d setting up event watch\n", fd)
 			syscall.SetKevent(change, fd, syscall.EVFILT_VNODE, syscall.EV_ADD|syscall.EV_ENABLE|syscall.EV_CLEAR)
 			change.Fflags = syscall.NOTE_DELETE | syscall.NOTE_WRITE | syscall.NOTE_EXTEND | syscall.NOTE_ATTRIB | syscall.NOTE_RENAME | syscall.NOTE_LINK
 
 			for {
 				eventNames := make([]string, 1)
-				log.Println("[kqueue] waiting for an event")
+				log.Printf("[kqueue] fd=%d waiting for an event\n", fd)
 				n := -1
 				for n == -1 {
 					n, err = syscall.Kevent(kq, changeBuffer[:], eventBuffer[:], nil)
 					if n == -1 {
-						log.Printf("[kqueue] syscall.kevent -> EINTR\n", err)
+						log.Printf("[kqueue] fd=%d syscall.kevent -> EINTR\n", fd)
 					}
 				}
 
 				if (event.Flags & syscall.EV_ERROR) == syscall.EV_ERROR {
-					log.Printf("[kqueue] errno %d %v\n", n)
+					log.Printf("[kqueue] fd=%d errno %d %v\n", fd, n, err)
 					break // re-open file
 				}
 
@@ -92,19 +93,26 @@ func (k KeventWatch) Watch(block bool) <-chan int {
 					}
 				}
 
-				log.Printf("[kqueue] %v\n", eventNames)
+				log.Printf("[kqueue] fd=%d %v\n", fd, eventNames)
 				select {
 				case ch <- int(event.Flags):
 				default:
 					if block {
 						ch <- int(event.Flags)
 					} else {
-						log.Printf("[kqueue] notify channel full, skipping\n")
+						log.Printf("[kqueue] fd=%d notify channel full, skipping\n", fd)
 					}
 				}
 
 				failures = max(0, failures-1)
+
+				if (event.Flags & syscall.NOTE_DELETE) == syscall.NOTE_DELETE {
+					log.Printf("[kevent] fd=%d file deleted. re-opening\n", fd)
+					break // re-open file
+				}
 			}
+
+			syscall.Close(int(fd))
 		}
 	}()
 
