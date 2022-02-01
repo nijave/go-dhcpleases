@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	leases "github.com/nijave/go-dhcpd-leases"
-	_log "log"
+	"log"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
@@ -14,8 +14,6 @@ import (
 	"syscall"
 	"time"
 )
-
-var log *_log.Logger
 
 func GenerateHostsFile(fileName string) string {
 	validHostname := regexp.MustCompile(`^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$`)
@@ -96,8 +94,9 @@ func GenerateHostsFile(fileName string) string {
 }
 
 func main() {
-	log = _log.New(os.Stderr, "", 0)
-	log.SetFlags(_log.Ldate | _log.Ltime | _log.Lmicroseconds | _log.Lshortfile)
+	log.SetOutput(os.Stderr)
+	log.SetPrefix("")
+	log.SetFlags(log.Ldate | log.Ltime | log.Lmicroseconds | log.Lshortfile)
 
 	var fileName string
 	if len(os.Args) == 2 {
