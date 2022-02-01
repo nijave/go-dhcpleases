@@ -107,7 +107,7 @@ func (k KeventWatch) Watch(block bool) <-chan int {
 
 				failures = max(0, failures-1)
 
-				if (event.Flags & syscall.NOTE_DELETE) == syscall.NOTE_DELETE {
+				if (event.Fflags & syscall.NOTE_DELETE) == syscall.NOTE_DELETE {
 					log.Printf("[kevent] fd=%d file deleted. re-opening\n", fd)
 					break // re-open file
 				}
