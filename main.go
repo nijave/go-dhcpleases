@@ -25,6 +25,7 @@ func GenerateHostsFile(fileName string) string {
 	if err != nil {
 		panic(err)
 	}
+	defer f.Close()
 
 	leaseData := leases.Parse(f)
 	idxIp := map[string]*leases.Lease{}
