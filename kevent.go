@@ -1,6 +1,7 @@
 package main
 
 import (
+	"strings"
 	"syscall"
 	"time"
 )
@@ -93,7 +94,7 @@ func (k KeventWatch) Watch(block bool) <-chan int {
 					}
 				}
 
-				log.Printf("[kqueue] fd=%d %v\n", fd, eventNames)
+				log.Printf("[kqueue] fd=%d [%s]\n", fd, strings.Join(eventNames, ", "))
 				select {
 				case ch <- int(event.Flags):
 				default:
