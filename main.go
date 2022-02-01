@@ -4,6 +4,8 @@ import (
 	"fmt"
 	leases "github.com/nijave/go-dhcpd-leases"
 	_log "log"
+	"net/http"
+	_ "net/http/pprof"
 	"os"
 	"regexp"
 	"sort"
@@ -108,6 +110,8 @@ func main() {
 		pid:     -1,
 		PidFile: "/var/run/dnsmasq.pid",
 	}
+
+	go http.ListenAndServe("localhost:8889", nil)
 
 	go dnsmasq.Watch()
 
