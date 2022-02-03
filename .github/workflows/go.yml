@@ -23,3 +23,9 @@ jobs:
 
 #     - name: Test
 #       run: go test -v ./...
+
+    - name: Archive build
+      uses: actions/upload-artifact@v2
+      with:
+        name: binary
+        path: go-dhcpleases
