@@ -1,0 +1,30 @@
+name: Build & Package
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  package:
+    runs-on: macos-10.15
+    name: Package OPNsense plugin
+    steps:
+    - uses: actions/checkout@v2
+    - id: package
+      uses: vmactions/freebsd-vm@v0.1.5
+      with:
+        usesh: true
+        prepare: |
+          pkg install -y lang/go git bash
+          cd /usr
+          git clone https://github.com/opnsense/tools
+          pushd tools
+          make update
+        run: bash ci_build.sh
+    - name: Archive build
+      uses: actions/upload-artifact@v2
+      with:
+        name: package
+        path: build/
