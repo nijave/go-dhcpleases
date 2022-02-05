@@ -1,0 +1,9 @@
+<acl>
+   <page-go-dhcpleases-config>
+      <name>Services: go-dhcpleases</name>
+      <patterns>
+         <pattern>ui/godhcpleases/*</pattern>
+         <pattern>api/godhcpleases/*</pattern>
+      </patterns>
+   </page-go-dhcpleases-config>
+</acl>

@@ -1,0 +1,1 @@
+Watches isc-dhcp lease file for changes, parses hostnames and their IPs, updates a hosts file, and notifies dnsmasq.
