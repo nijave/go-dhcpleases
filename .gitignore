@@ -2,3 +2,4 @@
 *.iml
 *.leases
 go-dhcpleases
+build/
