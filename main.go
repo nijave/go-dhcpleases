@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	leases "github.com/nijave/go-dhcpd-leases"
 	"log"
@@ -98,29 +99,26 @@ func main() {
 	log.SetPrefix("")
 	log.SetFlags(log.Ldate | log.Ltime | log.Lmicroseconds | log.Lshortfile)
 
-	var fileName string
-	if len(os.Args) == 2 {
-		fileName = os.Args[1]
-	} else {
-		fileName = "/var/dhcpd/var/db/dhcpd.leases"
+	leaseFilePath := flag.String("l", "/var/dhcpd/var/db/dhcpd.leases", "lease file path")
+	dnsmasqPidFilePath := flag.String("p", "/var/run/dnsmasq.pid", "dnsmasq pid file path")
+	noProfile := flag.Bool("no-profile", false, "disable http profile server")
+	domainSuffix := flag.String("d", "", "domain suffix to append to host entries")
+
+	flag.Parse()
+
+	if !*noProfile {
+		go http.ListenAndServe("localhost:8889", nil)
 	}
 
-	dnsmasq := DynamicPid{
-		lock:    sync.Mutex{},
-		pid:     -1,
-		PidFile: "/var/run/dnsmasq.pid",
-	}
+	dnsmasq := StartWatcher(*dnsmasqPidFilePath)
 
-	go http.ListenAndServe("localhost:8889", nil)
-
-	go dnsmasq.Watch()
-
-	dhcpWatch := KeventWatch{Filename: fileName}
+	dhcpWatch := KeventWatch{Filename: *leaseFilePath}
 	events := dhcpWatch.Watch(true)
 	for {
 		start := time.Now()
 		log.Println("[hosts] generating new file")
-		hostsFile := GenerateHostsFile(fileName)
+		hostsFile := GenerateHostsFile(*leaseFilePath, *domainSuffix)
+
 		fd, err := os.OpenFile("/var/etc/dnsmasq-hosts-dhcp", os.O_RDWR|os.O_TRUNC|os.O_CREATE, 0644)
 		if err != nil {
 			log.Printf("[hosts] error writing file %v\n", err)
