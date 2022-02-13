@@ -4,7 +4,7 @@ import (
 	"flag"
 	"fmt"
 	leases "github.com/nijave/go-dhcpd-leases"
-	"log"
+	"github.com/sirupsen/logrus"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
@@ -14,6 +14,8 @@ import (
 	"syscall"
 	"time"
 )
+
+var log = logrus.New()
 
 func GenerateHostsFile(fileName string, domainSuffix string) string {
 	validHostname := regexp.MustCompile(`^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$`)
@@ -39,36 +41,36 @@ func GenerateHostsFile(fileName string, domainSuffix string) string {
 		hostname = strings.Replace(hostname, " ", "-", -1)
 
 		if _, ipExists := idxIp[ipString]; ipExists {
-			log.Printf("[delete] duplicate lease for %s\n", ipString)
+			log.Printf("[delete] duplicate lease for %s", ipString)
 			delete(idxIp, ipString)
 		}
 
 		if hostname == "" {
-			log.Printf("[skip] %s with empty hostname\n", ipString)
+			log.Printf("[skip] %s with empty hostname", ipString)
 			continue
 		}
 
 		if !validHostname.MatchString(hostname) {
-			log.Printf("[skip] invalid hostname %s\n", hostname)
+			log.Printf("[skip] invalid hostname %s", hostname)
 			continue
 		}
 
 		if lease.BindingState != "active" {
-			log.Printf("[skip] %s with state %s\n", ipString, lease.BindingState)
+			log.Printf("[skip] %s with state %s", ipString, lease.BindingState)
 		}
 
 		if ip, hostnameExists := idxHostnameIp[hostname]; hostnameExists {
-			log.Printf("[delete] existing lease %s with duplicate hostname %s\n", ip, hostname)
+			log.Printf("[delete] existing lease %s with duplicate hostname %s", ip, hostname)
 			delete(idxIp, ip)
 		}
 
 		if lease.ClientHostname != hostname {
-			log.Printf("[replace] invalid hostname %s with %s\n", lease.ClientHostname, hostname)
+			log.Printf("[replace] invalid hostname %s with %s", lease.ClientHostname, hostname)
 			lease.ClientHostname = hostname
 		}
 
 		if strings.Contains(lease.ClientHostname, ".") {
-			log.Printf("[strip] suffix from %s\n", lease.ClientHostname)
+			log.Printf("[strip] suffix from %s", lease.ClientHostname)
 			lease.ClientHostname = strings.Split(lease.ClientHostname, ".")[0]
 		}
 
@@ -105,8 +107,7 @@ func GenerateHostsFile(fileName string, domainSuffix string) string {
 
 func main() {
 	log.SetOutput(os.Stderr)
-	log.SetPrefix("")
-	log.SetFlags(log.Ldate | log.Ltime | log.Lmicroseconds | log.Lshortfile)
+	log.SetLevel(logrus.TraceLevel)
 
 	leaseFilePath := flag.String("l", "/var/dhcpd/var/db/dhcpd.leases", "lease file path")
 	dnsmasqPidFilePath := flag.String("p", "/var/run/dnsmasq.pid", "dnsmasq pid file path")
@@ -130,17 +131,17 @@ func main() {
 
 		fd, err := os.OpenFile("/var/etc/dnsmasq-hosts-dhcp", os.O_RDWR|os.O_TRUNC|os.O_CREATE, 0644)
 		if err != nil {
-			log.Printf("[hosts] error writing file %v\n", err)
+			log.Printf("[hosts] error writing file %v", err)
 		}
 		n, err := fd.WriteString(hostsFile)
 		if err != nil {
-			log.Printf("[hosts] writing file %v\n", err)
+			log.Printf("[hosts] writing file %v", err)
 		}
 		fd.Close()
-		log.Printf("[hosts] wrote %d bytes\n", n)
+		log.Printf("[hosts] wrote %d bytes", n)
 
 		dnsmasq.Notify(syscall.SIGHUP)
-		log.Printf("[hosts] completed in %dms\n", time.Since(start).Milliseconds())
+		log.Printf("[hosts] completed in %dms", time.Since(start).Milliseconds())
 
 		<-events
 	}

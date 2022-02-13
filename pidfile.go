@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"os"
 	"strconv"
 	"strings"
@@ -32,7 +31,7 @@ func StartWatcher(pidFile string) *DynamicPid {
 		pid:          &emptyPid,
 		signals:      make(chan syscall.Signal, 1),
 		PidFile:      pidFile,
-}
+	}
 
 	go watcher.watch()
 	go watcher.notifier()
@@ -46,10 +45,10 @@ func (p DynamicPid) watch() {
 	fileWatchEvents := pidFileWatch.Watch(false)
 
 	for {
-		log.Printf("[pid] reading %s\n", p.PidFile)
+		log.Printf("[pid] reading %s", p.PidFile)
 		fd, err := os.Open(p.PidFile)
 		if err != nil {
-			log.Printf("[pid] error %v opening pid file %s\n", err, p.PidFile)
+			log.Printf("[pid] error %v opening pid file %s", err, p.PidFile)
 			time.Sleep(1 * time.Second)
 			continue
 		}
@@ -57,25 +56,25 @@ func (p DynamicPid) watch() {
 		n, err := fd.Read(data)
 		fd.Close()
 		if err != nil {
-			log.Printf("[pid] error %v reading pid file %s\n", err, p.PidFile)
+			log.Printf("[pid] error %v reading pid file %s", err, p.PidFile)
 			time.Sleep(1 * time.Second)
 			continue
 		}
-		log.Printf("[pid] read %d bytes from %s\n", n, p.PidFile)
+		log.Printf("[pid] read %d bytes from %s", n, p.PidFile)
 
 		pidText := strings.TrimSpace(string(data[0:n]))
 		pid, err := strconv.Atoi(pidText)
 		if err != nil {
-			log.Printf("[pid] couldn't parse pid %v `%s`\n", data, pidText)
+			log.Printf("[pid] couldn't parse pid %v `%s`", data, pidText)
 			time.Sleep(1 * time.Second)
 			continue
 		}
-		log.Printf("[pid] read pid=%d from %s\n", pid, p.PidFile)
+		log.Printf("[pid] read pid=%d from %s", pid, p.PidFile)
 		p.setPid(pid)
 
 		p.pidAvailable <- pid
 
-		log.Printf("[pid] watching pid file %s for changes\n", p.PidFile)
+		log.Printf("[pid] watching pid file %s for changes", p.PidFile)
 		<-fileWatchEvents
 	}
 }
@@ -83,7 +82,7 @@ func (p DynamicPid) watch() {
 func (p DynamicPid) notifier() {
 	log.Println("[pid] notifier waiting on pid")
 	<-p.pidAvailable
-	log.Printf("[pid] notifier got pid=%d\n", p.GetPid())
+	log.Printf("[pid] notifier got pid=%d", p.GetPid())
 
 	if p.GetPid() == -1 {
 		log.Println("[pid] err pid is still -1")
@@ -93,15 +92,15 @@ func (p DynamicPid) notifier() {
 	var signal syscall.Signal
 	for {
 		signal = <-p.signals
-		log.Printf("[signal] send signum=%d pid=%d\n", signal, p.GetPid())
-	err := syscall.Kill(p.GetPid(), signal)
-	if err != nil {
-			log.Printf("[notify] %v notifying pid=%d\n", err, p.GetPid())
+		log.Printf("[signal] send signum=%d pid=%d", signal, p.GetPid())
+		err := syscall.Kill(p.GetPid(), signal)
+		if err != nil {
+			log.Printf("[notify] %v notifying pid=%d", err, p.GetPid())
 		}
 	}
-	}
+}
 
 func (p DynamicPid) Notify(signal syscall.Signal) {
-	log.Printf("[signal] queue signum=%d pid=%d\n", signal, p.GetPid())
+	log.Printf("[signal] queue signum=%d pid=%d", signal, p.GetPid())
 	p.signals <- signal
 }
