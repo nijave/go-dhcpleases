@@ -15,7 +15,7 @@ import (
 	"time"
 )
 
-func GenerateHostsFile(fileName string) string {
+func GenerateHostsFile(fileName string, domainSuffix string) string {
 	validHostname := regexp.MustCompile(`^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$`)
 	var hostsFile strings.Builder
 
@@ -67,6 +67,11 @@ func GenerateHostsFile(fileName string) string {
 			lease.ClientHostname = hostname
 		}
 
+		if strings.Contains(lease.ClientHostname, ".") {
+			log.Printf("[strip] suffix from %s\n", lease.ClientHostname)
+			lease.ClientHostname = strings.Split(lease.ClientHostname, ".")[0]
+		}
+
 		idxHostnameIp[hostname] = ipString
 		idxIp[ipString] = &lease
 	}
@@ -87,7 +92,12 @@ func GenerateHostsFile(fileName string) string {
 	})
 
 	for _, lease := range leases {
-		hostsFile.WriteString(fmt.Sprintf("%-16s %s\n", lease.IP.String(), lease.ClientHostname))
+		hostsFile.WriteString(fmt.Sprintf("%-16s", lease.IP.String()))
+		if domainSuffix != "" {
+			hostsFile.WriteString(fmt.Sprintf(" %s.%s", lease.ClientHostname, domainSuffix))
+		}
+		hostsFile.WriteString(fmt.Sprintf(" %s", lease.ClientHostname))
+		hostsFile.WriteString("\n")
 	}
 
 	return hostsFile.String()
@@ -126,8 +136,9 @@ func main() {
 		if err != nil {
 			log.Printf("[hosts] writing file %v\n", err)
 		}
-		log.Printf("[hosts] wrote %d bytes\n", n)
 		fd.Close()
+		log.Printf("[hosts] wrote %d bytes\n", n)
+
 		dnsmasq.Notify(syscall.SIGHUP)
 		log.Printf("[hosts] completed in %dms\n", time.Since(start).Milliseconds())
 
