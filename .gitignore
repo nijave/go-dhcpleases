@@ -1,5 +1,6 @@
 .idea/
 *.iml
 *.leases
-go-dhcpleases
+/go-dhcpleases
+/plugin/src/bin/go-dhcpleases
 build/

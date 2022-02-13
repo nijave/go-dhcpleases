@@ -1,0 +1,5 @@
+{% if helpers.exists('OPNsense.GoDhcpLeases.general.enabled') and OPNsense.GoDhcpLeases.general.enabled == '1' %}
+go_dhcpleases_enable="YES"
+{% else %}
+go_dhcpleases_enable="NO"
+{% endif %}
