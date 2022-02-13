@@ -109,12 +109,24 @@ func main() {
 	log.SetOutput(os.Stderr)
 	log.SetLevel(logrus.TraceLevel)
 
-	leaseFilePath := flag.String("l", "/var/dhcpd/var/db/dhcpd.leases", "lease file path")
-	dnsmasqPidFilePath := flag.String("p", "/var/run/dnsmasq.pid", "dnsmasq pid file path")
 	noProfile := flag.Bool("no-profile", false, "disable http profile server")
+
+	command := flag.String("c", "", "command (ignored)")
 	domainSuffix := flag.String("d", "", "domain suffix to append to host entries")
+	foreground := flag.Bool("f", true, "run in foreground (ignored)")
+	dnsmasqPidFilePath := flag.String("p", "/var/run/dnsmasq.pid", "dnsmasq pid file path")
+	hostsFilePath := flag.String("h", "/var/etc/dnsmasq-hosts-dhcp", "hosts file path to update")
+	leaseFilePath := flag.String("l", "/var/dhcpd/var/db/dhcpd.leases", "lease file path")
 
 	flag.Parse()
+
+	if *foreground {
+		log.Warn("Foreground flag `-f` is ignored")
+	}
+
+	if len(*command) > 0 {
+		log.Warn("Command flag `-c` is ignored")
+	}
 
 	if !*noProfile {
 		go http.ListenAndServe("localhost:8889", nil)
@@ -129,7 +141,7 @@ func main() {
 		log.Println("[hosts] generating new file")
 		hostsFile := GenerateHostsFile(*leaseFilePath, *domainSuffix)
 
-		fd, err := os.OpenFile("/var/etc/dnsmasq-hosts-dhcp", os.O_RDWR|os.O_TRUNC|os.O_CREATE, 0644)
+		fd, err := os.OpenFile(*hostsFilePath, os.O_RDWR|os.O_TRUNC|os.O_CREATE, 0644)
 		if err != nil {
 			log.Printf("[hosts] error writing file %v", err)
 		}
