@@ -1,0 +1,23 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+# PROVIDE: go-dhcpleases
+# REQUIRE: SERVERS
+# KEYWORD: shutdown
+#
+
+. /etc/rc.subr
+
+name=go_dhcpleases
+
+rcvar=go_dhcpleases_enable
+pidfile=/var/run/go-dhcpleases.pid
+command=/usr/sbin/daemon
+command_args="-f -S -T go-dhcpleases -P ${pidfile} /usr/local/bin/go-dhcpleases /var/dhcpd/var/db/dhcpd.leases"
+
+load_rc_config go-dhcpleases
+
+: ${go_dhcpleases_enable="NO"}
+
+run_rc_command $1
