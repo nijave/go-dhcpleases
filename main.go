@@ -105,6 +105,16 @@ func GenerateHostsFile(fileName string, domainSuffix string) string {
 	return hostsFile.String()
 }
 
+func isFlagPassed(name string) bool {
+	found := false
+	flag.Visit(func(f *flag.Flag) {
+		if f.Name == name {
+			found = true
+		}
+	})
+	return found
+}
+
 func main() {
 	log.SetOutput(os.Stderr)
 	log.SetLevel(logrus.TraceLevel)
@@ -113,14 +123,14 @@ func main() {
 
 	command := flag.String("c", "", "command (ignored)")
 	domainSuffix := flag.String("d", "", "domain suffix to append to host entries")
-	foreground := flag.Bool("f", true, "run in foreground (ignored)")
+	flag.Bool("f", true, "run in foreground (ignored)")
 	dnsmasqPidFilePath := flag.String("p", "/var/run/dnsmasq.pid", "dnsmasq pid file path")
 	hostsFilePath := flag.String("h", "/var/etc/dnsmasq-hosts-dhcp", "hosts file path to update")
 	leaseFilePath := flag.String("l", "/var/dhcpd/var/db/dhcpd.leases", "lease file path")
 
 	flag.Parse()
 
-	if *foreground {
+	if isFlagPassed("f") {
 		log.Warn("Foreground flag `-f` is ignored")
 	}
 

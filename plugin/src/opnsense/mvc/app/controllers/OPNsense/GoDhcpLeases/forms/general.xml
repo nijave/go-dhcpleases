@@ -5,4 +5,10 @@
         <type>checkbox</type>
         <help>This will activate go-dhcpleases.</help>
     </field>
+    <field>
+        <id>general.domain</id>
+        <label>Domain suffix</label>
+        <type>text</type>
+        <help>Domain suffix to append on the name of each hostname</help>
+    </field>
 </form>

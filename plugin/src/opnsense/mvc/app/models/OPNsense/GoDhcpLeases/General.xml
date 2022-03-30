@@ -7,5 +7,9 @@
             <default>0</default>
             <Required>Y</Required>
         </enabled>
+        <domain type="TextField">
+            <default></default>
+            <Required>N</Required>
+        </domain>
     </items>
 </model>

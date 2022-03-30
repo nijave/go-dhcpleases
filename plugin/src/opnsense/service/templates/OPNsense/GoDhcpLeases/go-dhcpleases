@@ -3,3 +3,9 @@ go_dhcpleases_enable="YES"
 {% else %}
 go_dhcpleases_enable="NO"
 {% endif %}
+
+{% if helpers.exists('OPNsense.GoDhcpLeases.general.domain') and OPNsense.GoDhcpLeases.general.domain != '' %}
+go_dhcpleases_config="-d {{ OPNsense.GoDhcpLeases.general.domain }}"
+{% else %}
+go_dhcpleases_flags=""
+{% endif %}
