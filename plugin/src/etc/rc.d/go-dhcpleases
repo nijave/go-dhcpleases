@@ -10,13 +10,12 @@
 . /etc/rc.subr
 
 name=go_dhcpleases
+load_rc_config ${name}
 
 rcvar=go_dhcpleases_enable
 pidfile=/var/run/go-dhcpleases.pid
 command=/usr/sbin/daemon
-command_args="-f -S -T go-dhcpleases -P ${pidfile} /usr/local/bin/go-dhcpleases /var/dhcpd/var/db/dhcpd.leases"
-
-load_rc_config go-dhcpleases
+command_args="-f -S -T go-dhcpleases -P ${pidfile} /usr/local/bin/go-dhcpleases ${go_dhcpleases_config} /var/dhcpd/var/db/dhcpd.leases"
 
 : ${go_dhcpleases_enable="NO"}
 
