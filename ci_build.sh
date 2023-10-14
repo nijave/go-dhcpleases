@@ -2,6 +2,9 @@
 
 set -ex
 
+ls -al
+git log
+
 cwd=$(pwd)
 rm -rf build || true
 mkdir build
