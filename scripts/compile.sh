@@ -3,7 +3,7 @@
 set -ex
 
 ls -al
-git log
+git --no-pager log
 
 cwd=$(pwd)
 rm -rf build || true

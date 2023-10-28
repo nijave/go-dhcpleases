@@ -23,37 +23,15 @@ jobs:
         path: ${{ env.CACHE_PATH }}
         key: ${{ runner.os }}-cache
 
-    # - name: Build package
-    #   id: package
-    #   uses: vmactions/freebsd-vm@v0.3.1
-    #   with:
-    #     mem: 6144
-    #     # Should match opnsense
-    #     release: "13.2"
-    #     prepare: |
-    #       pkg install -y lang/go git bash pigz
-
-    #       cat <<'EOF' | bash
-    #       export OS=13.2
-    #       set -x
-    #       workdir=$(pwd)
-    #       env
-
-    #       if [ -f "$CACHE_PATH" ]; then
-    #         tar -C / -xf "$CACHE_PATH"
-    #       else
-    #         git clone https://github.com/opnsense/tools /usr/tools
-    #       fi
-
-    #       cd /usr/tools
-    #       make update
-    #       cd "$workdir"
-
-    #       time tar -cf - /usr/tools /usr/core /usr/plugins /usr/ports /usr/src | pigz > "$CACHE_PATH"
-    #       EOF
-    #     run: bash ci_build.sh
     - name: Setup upterm session
       uses: lhotari/action-upterm@v1
+
+    - name: FreeBSD Build
+      run: |
+        brew install hudochenkov/sshpass/sshpass
+        ssh-keygen -q -t rsa -N '' -f ~/.ssh/id_rsa <<<y >/dev/null 2>&1
+
+        ./build.sh
 
     - name: Save cache
       uses: actions/cache/save@v3
