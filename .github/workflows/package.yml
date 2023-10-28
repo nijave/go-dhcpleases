@@ -6,23 +6,39 @@ on:
   pull_request:
     branches: [ main ]
 
+env:
+  CACHE_PATH: opensense-tools-cache.tar.gz
+
 jobs:
   package:
-    runs-on: macos-10.15
+    runs-on: macos-latest
     name: Package OPNsense plugin
     steps:
-    - uses: actions/checkout@v2
-    - id: package
-      uses: vmactions/freebsd-vm@v0.1.5
+    - uses: actions/checkout@v4
+
+    - name: Restore cache
+      id: cache-restore
+      uses: actions/cache/restore@v3
       with:
-        usesh: true
-        prepare: |
-          pkg install -y lang/go git bash
-          cd /usr
-          git clone https://github.com/opnsense/tools
-          pushd tools
-          make update
-        run: bash ci_build.sh
+        path: ${{ env.CACHE_PATH }}
+        key: ${{ runner.os }}-cache
+
+    - name: Setup upterm session
+      uses: lhotari/action-upterm@v1
+
+    - name: FreeBSD Build
+      run: |
+        brew install hudochenkov/sshpass/sshpass
+        ssh-keygen -q -t rsa -N '' -f ~/.ssh/id_rsa <<<y >/dev/null 2>&1
+
+        ./build.sh
+
+    - name: Save cache
+      uses: actions/cache/save@v3
+      with:
+        path: ${{ env.CACHE_PATH }}
+        key: ${{ runner.os }}-cache
+
     - name: Archive build
       uses: actions/upload-artifact@v2
       with:

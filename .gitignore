@@ -1,6 +1,8 @@
 .idea/
 *.iml
 *.leases
+*.qcow2*
+*.tar.gz
 /go-dhcpleases
 /plugin/src/bin/go-dhcpleases
 build/
